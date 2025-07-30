@@ -1,4 +1,5 @@
 import { Boot } from "./game/scenes/Boot";
+import { Game } from "./game/scenes/Game";
 
 document.addEventListener('DOMContentLoaded', () => {
     const config = {
@@ -7,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
         description: '',
         parent: 'game-container',
         pixelArt: true,
-        width: 64,
-        height: 64,
+        width: 128,
+        height: 128,
         physics: {
             default: 'arcade',
             arcade: {
@@ -18,12 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
         backgroundColor: '#0f380f',
         scene: [
             Boot,
+            Game,
         ],
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
-            width: 64,
-            height: 64,
+            width: 128,
+            height: 128,
         },
     }
 
