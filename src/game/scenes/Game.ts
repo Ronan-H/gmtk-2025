@@ -1,19 +1,33 @@
 import Phaser from "phaser";
 import { HALF_GAME_HEIGHT, HALF_GAME_WIDTH, PALETTE } from "../../config";
 import buzzPath from '../assets/buzz.wav';
+import click1 from '../assets/click-1.wav';
+import click2 from '../assets/click-2.wav';
+import click3 from '../assets/click-3.wav';
+import { FeedbackData, generateFeedbackSequence } from "../logic/cracking";
 
 export class Game extends Phaser.Scene {
     arc: Phaser.GameObjects.Arc;
     leftArrow: Phaser.Input.Keyboard.Key;
     rightArrow: Phaser.Input.Keyboard.Key;
-    buzz: Phaser.Loader.LoaderPlugin;
+    clickKeys: string[];
+    feedbackArr: FeedbackData[];
 
     constructor() {
         super('Game');
     }
 
     preload() {
-        this.buzz = this.load.audio('buzz', buzzPath)
+        this.load.audio('buzz', buzzPath)
+        this.clickKeys = [
+            'click1',
+            'click2',
+            'click3',
+        ];
+
+        this.load.audio('click1', click1);
+        this.load.audio('click2', click2);
+        this.load.audio('click3', click3);
     }
 
     create() {
@@ -30,6 +44,8 @@ export class Game extends Phaser.Scene {
 
         this.leftArrow = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)!;
         this.rightArrow = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)!;
+
+        this.feedbackArr = generateFeedbackSequence(3);
     }
 
     update() {
@@ -46,12 +62,35 @@ export class Game extends Phaser.Scene {
             if (!this.sound.isPlaying('buzz')) {
                 this.sound.play('buzz', {
                     loop: true,
-                    volume: 0.1,
-                    // detune: 0, // Pitch can be changed here!
-            });
+                    volume: 0.01,
+                });
             }
         } else {
             this.sound.stopAll();
+        }
+
+        this.updateFeedback();
+    }
+
+    playRandomClick() {
+        const clickKey = Phaser.Math.RND.pick(this.clickKeys);
+        this.sound.play(clickKey);
+    }
+
+    updateFeedback() {
+        for (let feedback of this.feedbackArr) {
+            const { angle: feedbackAngle, threshold } = feedback;
+            
+            if (!feedback.active) {
+                const angleDiff = Phaser.Math.Angle.ShortestBetween(this.arc.angle, feedbackAngle);
+                console.log(angleDiff, threshold);
+                
+                if (angleDiff > threshold) {
+                    this.playRandomClick();
+                    feedback.active = true;
+                    return;
+                }
+            }
         }
     }
 }
