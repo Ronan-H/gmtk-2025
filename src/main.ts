@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // debug: true,
             }
         },
-        backgroundColor: '#0f380f',
+        backgroundColor: '#0f1a3b',
         scene: [
             Boot,
             Game,

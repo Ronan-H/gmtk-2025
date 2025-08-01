@@ -6,8 +6,8 @@ export const HALF_GAME_WIDTH = GAME_WIDTH / 2;
 export const HALF_GAME_HEIGHT = GAME_HEIGHT / 2;
 
 export const PALETTE = {
-    lighest: 0x9bbc0f,
-    light: 0x8bac0f,
-    dark: 0x306230,
-    darkest: 0x0f380f,
+    lightest: 0x6b9bfb,
+    light: 0x587de0,
+    dark: 0x2c468b,
+    darkest: 0x0f1a3b
 };
