@@ -5,19 +5,21 @@ export type FeedbackData = {
     active: boolean;
 }
 
-export function generatemFeedback(): FeedbackData {
-    return {
-        angle: Phaser.Math.Angle.RandomDegrees(),
-        threshold: 45,
-        active: false,
-    };
-}
-
 export function generateFeedbackSequence(length: number): FeedbackData[] {
-    const arr = [];
+    const arr: FeedbackData[] = [];
+
+    const maxDeviation = 15;
 
     for (let i = 0; i < length; i++) {
-        arr.push(generatemFeedback());
+        const prevAngle = arr[i - 1]?.angle ?? -90;
+
+        arr.push({
+            angle: Phaser.Math.Angle.WrapDegrees(
+                prevAngle + 180 + Phaser.Math.Between(-(maxDeviation / 2), maxDeviation / 2)
+            ),
+            threshold: 30,
+            active: false,
+        });
     }
 
     return arr;

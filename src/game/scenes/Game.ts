@@ -5,6 +5,7 @@ import click1 from '../assets/click-1.wav';
 import click2 from '../assets/click-2.wav';
 import click3 from '../assets/click-3.wav';
 import { FeedbackData, generateFeedbackSequence } from "../logic/cracking";
+import { DIAL_ARC_LENGTH, DIAL_STARTING_ANGLE } from "../../game-constants";
 
 export class Game extends Phaser.Scene {
     arc: Phaser.GameObjects.Arc;
@@ -37,8 +38,8 @@ export class Game extends Phaser.Scene {
 
         this.add.circle(HALF_GAME_WIDTH, HALF_GAME_HEIGHT, radius, PALETTE.dark)
 
-        this.arc = this.add.arc(HALF_GAME_WIDTH, HALF_GAME_HEIGHT, radius, 0, 90, false, PALETTE.light)
-        this.arc.angle = 225;
+        this.arc = this.add.arc(HALF_GAME_WIDTH, HALF_GAME_HEIGHT, radius, 0, DIAL_ARC_LENGTH, false, PALETTE.light)
+        this.arc.angle = DIAL_STARTING_ANGLE;
 
         this.add.circle(HALF_GAME_WIDTH, HALF_GAME_HEIGHT, radius - thickness, PALETTE.darkest)
 
@@ -78,19 +79,21 @@ export class Game extends Phaser.Scene {
     }
 
     updateFeedback() {
-        for (let feedback of this.feedbackArr) {
-            const { angle: feedbackAngle, threshold } = feedback;
-            
-            if (!feedback.active) {
-                const angleDiff = Phaser.Math.Angle.ShortestBetween(this.arc.angle, feedbackAngle);
-                console.log(angleDiff, threshold);
-                
-                if (angleDiff > threshold) {
-                    this.playRandomClick();
-                    feedback.active = true;
-                    return;
-                }
-            }
+        const feedback = this.feedbackArr.find(f => !f.active);
+
+        if (!feedback) {
+            return;
+        }
+
+        const { angle: feedbackAngle, threshold } = feedback;
+        
+        const angleDiff = Math.abs(
+            Phaser.Math.Angle.ShortestBetween(this.arc.angle + DIAL_ARC_LENGTH, feedbackAngle)
+        );
+
+        if (angleDiff < threshold) {
+            this.playRandomClick();
+            feedback.active = true;
         }
     }
 }
