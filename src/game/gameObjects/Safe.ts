@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { HALF_GAME_HEIGHT, HALF_GAME_WIDTH, PALETTE } from "../../config";
-import { FeedbackData, generateFeedbackSequence } from "../logic/cracking";
+import { CrackConfig, FeedbackData, generateFeedbackSequence } from "../logic/cracking";
 import { DIAL_ARC_LENGTH, DIAL_STARTING_ANGLE } from "../../game-constants";
 
 export class Safe {
@@ -11,10 +11,14 @@ export class Safe {
     inputEnabled: boolean;
     scene: Phaser.Scene;
     onCracked: Function;
+    onExited: Function;
+    crackConfig: CrackConfig;
 
-    constructor(scene: Phaser.Scene, onCracked: Function) {
+    constructor(scene: Phaser.Scene, onCracked: Function, onExited: Function, crackConfig: CrackConfig) {
         this.scene = scene;
         this.onCracked = onCracked;
+        this.onExited = onExited;
+        this.crackConfig = crackConfig;
         this.create();
     }
 
@@ -40,7 +44,7 @@ export class Safe {
 
         this.dialObjects.forEach(o => o.scale = 0);
 
-        this.feedbackArr = generateFeedbackSequence(3);
+        this.feedbackArr = generateFeedbackSequence(this.crackConfig.numClicks);
 
         this.dialObjects.forEach(obj => {
             this.scene.tweens.add({
@@ -101,27 +105,27 @@ export class Safe {
             this.scene.sound.stopAll();
 
             this.scene.time.delayedCall(200, () => {
-                this.dialObjects.forEach(obj => {
-                    this.scene.tweens.add({
-                        targets: obj,
-                        angle: '+= 120',
-                        ease: 'Cubic.easeIn',
-                        duration: 500,
-                        onComplete: () => {
-                            this.playRandomClick(-800, -600).once('complete', () => {
-                                this.scene.time.delayedCall(100, () => this.scene.sound.play('synth', { volume: 0.1 }));
+                this.scene.tweens.add({
+                    targets: this.dialObjects,
+                    angle: '+= 120',
+                    ease: 'Cubic.easeIn',
+                    duration: 500,
+                    onComplete: () => {
+                        this.onCracked();
 
-                                this.scene.tweens.add({
-                                    targets: obj,
-                                    scale: { from: 1, to: 4 },
-                                    ease: 'Cubic.easeIn',
-                                    duration: 500,
-                                    onComplete: () => this.onCracked(),
-                                });
-                            })
-                        }
-                    });
-                }); 
+                        this.playRandomClick(-800, -600).once('complete', () => {
+                            this.scene.time.delayedCall(100, () => this.scene.sound.play('synth', { volume: 0.1 }));
+
+                            this.scene.tweens.add({
+                                targets: this.dialObjects,
+                                scale: { from: 1, to: 4 },
+                                ease: 'Cubic.easeIn',
+                                duration: 500,
+                                onComplete: () => this.onExited(),
+                            });
+                        })
+                    }
+                });
             });
         });
     }
@@ -129,9 +133,7 @@ export class Safe {
     updateFeedback() {
         const feedback = this.feedbackArr.find(f => !f.active);
 
-        if (!feedback) {
-            return;
-        }
+        if (!feedback) return;
 
         const { angle: feedbackAngle, threshold } = feedback;
         
@@ -147,5 +149,11 @@ export class Safe {
                 this.nextStage(clickSound);
             }
         }
+    }
+
+    destroy() {
+        this.scene.sound.stopAll();
+        this.arc.destroy();
+        this.dialObjects.forEach(d => d.destroy());
     }
 }

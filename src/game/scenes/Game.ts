@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import buzzPath from '../assets/buzz.wav';
 import click from '../assets/click.wav';
 import synth from '../assets/synth.wav';
-import { FeedbackData } from "../logic/cracking";
+import { CrackConfig, FeedbackData } from "../logic/cracking";
 import { Safe } from "../gameObjects/Safe";
 
 export class Game extends Phaser.Scene {
@@ -12,6 +12,7 @@ export class Game extends Phaser.Scene {
     feedbackArr: FeedbackData[];
     inputEnabled: boolean;
     safes: Safe[];
+    clickInc: number;
 
     constructor() {
         super('Game');
@@ -23,10 +24,26 @@ export class Game extends Phaser.Scene {
         this.load.audio('buzz', buzzPath)
     }
 
+    newSafe() {
+        const crackConfig: CrackConfig = {
+            numClicks: this.clickInc++,
+        };
+
+        return new Safe(this, () => this.onSafeCracked(), () => this.onSafeExited(), crackConfig);
+    }
+
+    onSafeCracked() {
+        this.safes.push(this.newSafe());
+    }
+
+    onSafeExited() {
+        const [firstSafe] = this.safes;
+        firstSafe.destroy();
+        this.safes.slice(1);
+    }
     create() {
-        this.safes = [
-            new Safe(this, () => this.safes.push(new Safe(this, () => {})))
-        ];
+        this.clickInc = 1;
+        this.safes = [this.newSafe()];
 
         this.leftArrow = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)!;
         this.rightArrow = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)!;

@@ -25,3 +25,6 @@ export function generateFeedbackSequence(length: number): FeedbackData[] {
     return arr;
 }
 
+export type CrackConfig = {
+    numClicks: number;
+}
