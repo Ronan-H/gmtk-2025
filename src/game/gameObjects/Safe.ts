@@ -66,11 +66,16 @@ export class Safe {
             return;
         }
 
-        if (leftDown) {
-            this.arc.angle -= 4;
-        }
+        let dirClockwise: boolean;
+
         if (rightDown) {
             this.arc.angle += 4;
+            dirClockwise = true;
+        } else if (leftDown) {
+            this.arc.angle -= 4;
+            dirClockwise = false;
+        } else {
+            dirClockwise = false;
         }
 
         const isRotating = leftDown !== rightDown;
@@ -79,14 +84,14 @@ export class Safe {
             if (!this.scene.sound.isPlaying('buzz')) {
                 this.scene.sound.play('buzz', {
                     loop: true,
-                    volume: 0.01,
+                    volume: 0.1,
                 });
             }
         } else {
             this.scene.sound.stopAll();
         }
 
-        this.updateFeedback();
+        this.updateFeedback(dirClockwise);
     }
 
     playRandomClick(detuneMin: number = -300, detuneMax: number = 300) {
@@ -114,7 +119,7 @@ export class Safe {
                         this.onCracked();
 
                         this.playRandomClick(-800, -600).once('complete', () => {
-                            this.scene.time.delayedCall(100, () => this.scene.sound.play('synth', { volume: 0.1 }));
+                            this.scene.time.delayedCall(100, () => this.scene.sound.play('synth', { volume: 0.5 }));
 
                             this.scene.tweens.add({
                                 targets: this.dialObjects,
@@ -130,20 +135,48 @@ export class Safe {
         });
     }
 
-    updateFeedback() {
+    resetFeedback() {
+        this.feedbackArr.forEach(f => {
+            f.active = false
+        });
+        this.scene.sound.play('womp', { volume: 1 })
+    }
+
+    updateFeedback(dirClockwise: boolean) {
         const feedback = this.feedbackArr.find(f => !f.active);
 
         if (!feedback) return;
 
-        const { angle: feedbackAngle, threshold } = feedback;
+        const prevFeedback: FeedbackData | null = this.feedbackArr.reduce<FeedbackData | null>(
+            (prev, cur) => cur?.active ? cur : prev, null
+        );
+
+        if (prevFeedback) {
+            const { threshold, angle: prevFeedbackAngle } = prevFeedback;
+            const angleDiff = Math.abs(
+                Phaser.Math.Angle.ShortestBetween(this.arc.angle + DIAL_ARC_LENGTH, prevFeedbackAngle)
+            );
+
+            if (angleDiff > threshold) {
+                const trippedClockwise = dirClockwise && prevFeedback.triggeredClockwise;
+                const trippedAnticlockwise = !dirClockwise && !prevFeedback.triggeredClockwise;
+                if (trippedClockwise || trippedAnticlockwise) {
+                    this.resetFeedback();
+                    return;
+                }
+            }
+        }
+
+        const { angle: feedbackAngle } = feedback;
         
         const angleDiff = Math.abs(
             Phaser.Math.Angle.ShortestBetween(this.arc.angle + DIAL_ARC_LENGTH, feedbackAngle)
         );
 
-        if (angleDiff < threshold) {
+        if (angleDiff < 10) {
             const clickSound = this.playRandomClick();
             feedback.active = true;
+            feedback.triggeredClockwise = dirClockwise;
 
             if (!this.feedbackArr.some(f => !f.active)) {
                 this.nextStage(clickSound);

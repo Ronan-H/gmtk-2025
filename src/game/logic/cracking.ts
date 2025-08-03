@@ -3,6 +3,11 @@ export type FeedbackData = {
     angle: number;
     threshold: number;
     active: boolean;
+    triggeredClockwise: boolean;
+}
+
+export type CrackConfig = {
+    numClicks: number;
 }
 
 export function generateFeedbackSequence(length: number): FeedbackData[] {
@@ -19,12 +24,17 @@ export function generateFeedbackSequence(length: number): FeedbackData[] {
             ),
             threshold: 30,
             active: false,
+            triggeredClockwise: false,
         });
     }
 
     return arr;
 }
 
-export type CrackConfig = {
-    numClicks: number;
+export function getResetFeedback(feedback: FeedbackData) {
+    return {
+        ...feedback,
+        active: false,
+        triggeredClockwise: false,
+    }
 }

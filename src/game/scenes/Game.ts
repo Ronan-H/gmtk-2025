@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import buzzPath from '../assets/buzz.wav';
 import click from '../assets/click.wav';
 import synth from '../assets/synth.wav';
+import wompPath from '../assets/womp.wav';
 import { CrackConfig, FeedbackData } from "../logic/cracking";
 import { Safe } from "../gameObjects/Safe";
 
@@ -22,6 +23,7 @@ export class Game extends Phaser.Scene {
         this.load.audio('click', click);
         this.load.audio('synth', synth);
         this.load.audio('buzz', buzzPath)
+        this.load.audio('womp', wompPath)
     }
 
     newSafe() {
